@@ -7,16 +7,19 @@ from pybo import db
 from ..forms import AnswerForm
 from pybo.models import Question, Answer
 
+from pybo.views.auth_views import login_required
+
 bp = Blueprint('answer', __name__, url_prefix='/answer')
 
 
 @bp.route('/create/<int:question_id>', methods=('POST',))
+@login_required
 def create(question_id):
     form = AnswerForm()
     question = Question.query.get_or_404(question_id)
     if form.validate_on_submit():
         content = request.form['content']  # POST 폼 방식으로 전송된 데이터 항목 중 name 속성이 'content' 인 값
-        answer = Answer(content=content, create_date=datetime.now())
+        answer = Answer(content=content, create_date=datetime.now(), user=g.user)
         question.answer_set.append(answer)
         db.session.commit()
         return redirect(url_for('question.detail', question_id=question_id))
